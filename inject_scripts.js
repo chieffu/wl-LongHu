@@ -1,8 +1,6 @@
 (function() {
     console.info("injecting script to self:", self);
 
-    let isProcessing = false; // 标志位，确保同一时间只有一个 handleMessage 调用在执行
-
     function clickCenter(element, clickCount = 1) {
         if (!element) {
             console.warn('handleMessage clickCenter: element is null or undefined');
@@ -163,7 +161,7 @@
         button2.style.cursor = 'pointer';
         button2.addEventListener('click', () => {
             const betAmount = parseInt(input.value, 10) || 10;
-            handleMessage(1, 2, 0, betAmount);
+            handleMessage(1, 2, Date.now(), betAmount);
         });
 
         // 将元素添加到悬浮 div

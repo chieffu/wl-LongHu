@@ -319,7 +319,7 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
             return;
         }
 
-        if ((isGameUrl(tab.url)||isEmbedUrl) && !attachedTabs.has(tab.id)) {
+        if ((isGameUrl(tab.url)||isEmbedUrl(tab.url)) && !attachedTabs.has(tab.id)) {
             console.info('Enable debugging for tab', tab.url);
             chrome.debugger.attach({
                 tabId: tab.id
