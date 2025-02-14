@@ -22,7 +22,6 @@
         }
     }
     function selectCoins(betAmount) {
-        // 修改 selectCoins 的生成逻辑
         const coins = [1000, 5000,10000,20000,50000,100000, 200000,500000,1000000,2000000,5000000, 10000000];
         let theBet = betAmount * 100;
         const selectedCoins = [];
@@ -34,9 +33,71 @@
         }
         return selectedCoins;
     }
+    function bindEvent(){
+        if (window.wsNet && !window.zc){
+            zc = (e => (e[e.HEARTBEATS = 1] = "HEARTBEATS",
+                e[e.LOGIN_SUCCESS = 106] = "LOGIN_SUCCESS",
+                e[e.LOGIN_ERROR = 107] = "LOGIN_ERROR",
+                e[e.ERROR = 600] = "ERROR",
+                e[e.SERVER_MAINTAIN = 700] = "SERVER_MAINTAIN",
+                e[e.UPDATE_SCORE = 720] = "UPDATE_SCORE",
+                e[e.GAME_CONFIG = 1201] = "GAME_CONFIG",
+                e[e.ROOM_INFOS = 1001] = "ROOM_INFOS",
+                e[e.SELF_SCORE = 1102] = "SELF_SCORE",
+                e[e.CHECK_BETTING_ROOM = 1314] = "CHECK_BETTING_ROOM",
+                e[e.ROOM_BEGIN_CHIP = 1002] = "ROOM_BEGIN_CHIP",
+                e[e.ROOM_GAME_RESULT = 1004] = "ROOM_GAME_RESULT",
+                e[e.GOOD_ROAD_CHANGE = 1303] = "GOOD_ROAD_CHANGE",
+                e[e.ENTER_INNER_ROOM = 1006] = "ENTER_INNER_ROOM",
+                e[e.DEAL_CARD = 1300] = "DEAL_CARD",
+                e[e.BACCARAT_BET = 1008] = "BACCARAT_BET",
+                e[e.SYNC_BET = 1999] = "SYNC_BET",
+                e[e.ROAD_SET_SUCCEED = 1305] = "ROAD_SET_SUCCEED",
+                e[e.BACCARAT_ONLINE_LIST = 1101] = "BACCARAT_ONLINE_LIST",
+                e[e.BET_STAGE_ERROR = 1202] = "BET_STAGE_ERROR",
+                e[e.EDIT_CARDS = 1301] = "EDIT_CARDS",
+                e[e.WASHING_CARD = 1302] = "WASHING_CARD",
+                e[e.INTO_MAINTAIN = 1304] = "INTO_MAINTAIN",
+                e[e.BET_INFO_RES = 1315] = "BET_INFO_RES",
+                e[e.BACCARAT_KICK_USER_2_LIST = 1316] = "BACCARAT_KICK_USER_2_LIST",
+                e[e.SET_SHOW_OPTION_SUCCEED = 1308] = "SET_SHOW_OPTION_SUCCEED",
+                e[e.BACCARAT_UPDATE_DEALER_INFO = 1317] = "BACCARAT_UPDATE_DEALER_INFO",
+                e[e.BACCARAT_ROOM_VIDEO_URL_INFO = 1407] = "BACCARAT_ROOM_VIDEO_URL_INFO",
+                e[e.BACCARAT_MI_START = 1400] = "BACCARAT_MI_START",
+                e[e.BACCARAT_MI_INFO = 1401] = "BACCARAT_MI_INFO",
+                e[e.BACCARAT_MI_END = 1402] = "BACCARAT_MI_END",
+                e[e.BACCARAT_MI_RIGHT_INFO = 1403] = "BACCARAT_MI_RIGHT_INFO",
+                e[e.BACCARAT_MI_OTHER_OPEN = 1404] = "BACCARAT_MI_OTHER_OPEN",
+                e[e.BACCARAT_MI_CAN_ENTER_WITH_SIT = 1405] = "BACCARAT_MI_CAN_ENTER_WITH_SIT",
+                e[e.BACCARAT_MI_ENTER_WITH_SIT_RES = 1406] = "BACCARAT_MI_ENTER_WITH_SIT_RES",
+                e[e.BACCARAT_BET_RES = 1409] = "BACCARAT_BET_RES",
+                e[e.ROOM_LIST = 2999] = "ROOM_LIST",
+                e[e.ACCOUNT_REMOTE_LOGIN = 702] = "ACCOUNT_REMOTE_LOGIN",
+                e[e.BACCARAT_CLIENT_CONFIG = 1430] = "BACCARAT_CLIENT_CONFIG",
+                e[e.BACCARAT_SELF_CHIPS = 1441] = "BACCARAT_SELF_CHIPS",
+                e))({})
+
+            zc.data= {}
+            for(let key in zc){
+                if (typeof zc[key] === 'number') {
+                    const theKey = key;
+                    window.wsNet.onWSReceive(zc[theKey], (e) => {
+                        console.info('onWSReceive ' + theKey + ':', e);
+                        zc.data[theKey]=e;
+                    });
+                }
+            }
+            window.zc = zc;
+        }
+    }
 
      function handleMessage(card1, card2, theTime, betAmount) {
         console.info('handle message:', card1, card2, theTime, betAmount);
+        if(betAmount==0){
+            betAmount = localStorage.getItem('betAmount');
+        }else if(betAmount==-1){
+            betAmount = getMaxSelectedChipValue();
+        }
         const card1_num = (card1 % 13) + 1;
         const card2_num = (card2 % 13) + 1;
         const area_num = card1_num > card2_num ? 0 : (card1_num < card2_num ? 2 : 1);
@@ -50,6 +111,7 @@
             }
             console.info('handle pack spend time:', new Date().getTime() - theTime, card1_num, card2_num, area_num,betAmount);
             //return;
+            bindEvent();
         }
 
         function clickBetAreaThenConfirm(count){
@@ -81,6 +143,7 @@
                 });
             });
         }
+
         const coins = selectCoins(betAmount);
         if(coins.length==0)return;
         const chipValue = coins[0];
@@ -101,9 +164,11 @@
     // 创建悬浮的 div
     function createFloatingDiv() {
         // 检查是否已经存在悬浮 div
-        if (document.getElementById('testBetDiv')) {
-            console.info('testBetDiv div already exists.');
-            return;
+        // 检查是否已经存在悬浮 div
+        const existingDiv = document.getElementById('testBetDiv');
+        if (existingDiv) {
+            console.info('testBetDiv div already exists. Removing existing div.');
+            existingDiv.remove();
         }
 
         const floatingDiv = document.createElement('div');
@@ -130,10 +195,22 @@
         // 创建输入框
         const input = document.createElement('input');
         input.type = 'number';
-        input.value = '10';
+        let value = window.localStorage.getItem('betAmount');
+        if (value === null || isNaN(value)) {
+            value = 10;
+            window.localStorage.setItem('betAmount', value);
+        }
+        input.value = value;
         input.style.marginRight = '10px';
         input.style.width = '80px'; // 设置输入框宽度
         input.style.border = '1px solid #ccc';
+        // 监听输入框失去焦点事件
+        input.addEventListener('blur', function() {
+            let newValue = input.value;
+            if (!isNaN(newValue)) {
+                window.localStorage.setItem('betAmount', newValue);
+            }
+        });
 
         // 创建按钮1
         const button1 = document.createElement('button');
@@ -147,7 +224,7 @@
         button1.style.cursor = 'pointer';
         button1.addEventListener('click', () => {
             const betAmount = parseInt(input.value, 10) || 10;
-            handleMessage(2, 1, 0, betAmount);
+            handleMessage(2, 1, Date.now(), betAmount);
         });
 
         // 创建按钮2
@@ -195,8 +272,32 @@
         console.info('testBetDiv div added');
     }
 
+    function getMaxSelectedChipValue() {
+        const selectedChips = document.querySelectorAll('#slide-container .relative.chips-icon');
+        let maxValue = 0;
+        selectedChips.forEach(chipDiv => {
+            // 获取第一个子 div
+            const firstChildDiv = chipDiv.querySelector('div');
+            if (firstChildDiv) {
+                // 获取 data-id 属性
+                const dataId = firstChildDiv.getAttribute('data-id');
+                // 将 data-id 转换为数字并更新 maxValue
+                if (!dataId || dataId==='forbid_0') {
+                    value = 0;
+                } else {
+                    value = parseInt(dataId.split('_')[1], 10);
+                }
+                if (!isNaN(value) && value > maxValue) {
+                    maxValue = value;
+                }
+            }
+        });
+        return maxValue;
+    }
+
     // 创建悬浮 div
     createFloatingDiv();
+
     console.info('injecting scripts successfully.');
     return true;
 })();

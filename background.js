@@ -298,9 +298,34 @@ function handleBreak(target, currentBreakpointId) {
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status === 'complete') {
-        attachDebugger();
+       await attachTab(tab);
     }
 });
+
+async function attachTab(tab){
+    const script = await fetch(chrome.runtime.getURL('inject_scripts.js')).then(response => response.text());
+    chrome.debugger.getTargets((targets) => {
+        if (chrome.runtime.lastError) {
+            console.error('Error getting targets:', chrome.runtime.lastError);
+            return;
+        }
+
+        targets.forEach((target) => {
+            const isGame = isGameUrl(target.url);
+            if (isGame && target.url === tab.url) {
+                // Step 2: 连接到目标
+                chrome.debugger.attach({ targetId: target.id }, "1.3", () => {
+                    if (chrome.runtime.lastError) {
+                        console.error(chrome.runtime.lastError.message);
+                    }
+                    console.log(`成功连接到目标: ${target.url}`);
+                    attachedTabs.add(target.id);
+                    inject_scripts(target, script);
+                });
+            }
+        });
+    });
+}
 
 // 监听新标签页创建事件
 chrome.tabs.onCreated.addListener(async (tab) => {
