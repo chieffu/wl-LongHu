@@ -95,8 +95,11 @@
         console.info('handle message:', card1, card2, theTime, betAmount);
         if(betAmount==0){
             betAmount = localStorage.getItem('betAmount');
-        }else if(betAmount==-1){
+        }
+        if(betAmount==-1){
             betAmount = getMaxSelectedChipValue();
+        }else if(betAmount==0){
+            betAmount = 10;
         }
         const card1_num = (card1 % 13) + 1;
         const card2_num = (card2 % 13) + 1;
