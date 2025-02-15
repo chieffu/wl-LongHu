@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (isNaN(amount) || amount <= 0) {
-            status.textContent = '金额必须是大于0的数字';
+        if (isNaN(amount)) {
+            status.textContent = '金额必须是数字';
             status.style.color = 'red';
             return;
         }

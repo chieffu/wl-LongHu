@@ -93,14 +93,18 @@
 
      function handleMessage(card1, card2, theTime, betAmount) {
         console.info('handle message:', card1, card2, theTime, betAmount);
+
         if(betAmount==0){
             betAmount = localStorage.getItem('betAmount');
+            if(betAmount==0)betAmount=10;
         }
-        if(betAmount==-1){
-            betAmount = getMaxSelectedChipValue();
-        }else if(betAmount==0){
-            betAmount = 10;
+        if(betAmount<=1){
+            let maxChip = getMaxSelectedChipValue();
+            betAmount = maxChip * betAmount;
+            if(betAmount<0)betAmount=-betAmount;
         }
+
+
         const card1_num = (card1 % 13) + 1;
         const card2_num = (card2 % 13) + 1;
         const area_num = card1_num > card2_num ? 0 : (card1_num < card2_num ? 2 : 1);
