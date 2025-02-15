@@ -139,9 +139,11 @@
 
         // 创建标题
         const title = document.createElement('div');
-        title.textContent = '接口下注';
+        title.id='bet-comment';
+        title.textContent = '插件下注';
         title.style.textAlign = 'center';
         title.style.marginBottom = '10px';
+        title.style.fontSize = '11px';
 
         // 创建输入框
         const input = document.createElement('input');
@@ -281,6 +283,7 @@
                 localStorage.setItem('totalMoney', amount);
                 if (originMoney>0){
                     console.info('原始金额:', originMoney, '当前金额:', amount,'盈利：', amount - originMoney, '盈利率：', (amount - originMoney) / originMoney * 100 + '%')
+                    document.getElementById('bet-comment').textContent = '余额:'+ amount+' 盈利:'+ (amount - originMoney);
                 }
             }
         }).catch(err => {
