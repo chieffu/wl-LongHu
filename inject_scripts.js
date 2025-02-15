@@ -33,65 +33,7 @@
         }
         return selectedCoins;
     }
-    function bindEvent(){
-        if (window.wsNet && !window.zc){
-            zc = (e => (e[e.HEARTBEATS = 1] = "HEARTBEATS",
-                e[e.LOGIN_SUCCESS = 106] = "LOGIN_SUCCESS",
-                e[e.LOGIN_ERROR = 107] = "LOGIN_ERROR",
-                e[e.ERROR = 600] = "ERROR",
-                e[e.SERVER_MAINTAIN = 700] = "SERVER_MAINTAIN",
-                e[e.UPDATE_SCORE = 720] = "UPDATE_SCORE",
-                e[e.GAME_CONFIG = 1201] = "GAME_CONFIG",
-                e[e.ROOM_INFOS = 1001] = "ROOM_INFOS",
-                e[e.SELF_SCORE = 1102] = "SELF_SCORE",
-                e[e.CHECK_BETTING_ROOM = 1314] = "CHECK_BETTING_ROOM",
-                e[e.ROOM_BEGIN_CHIP = 1002] = "ROOM_BEGIN_CHIP",
-                e[e.ROOM_GAME_RESULT = 1004] = "ROOM_GAME_RESULT",
-                e[e.GOOD_ROAD_CHANGE = 1303] = "GOOD_ROAD_CHANGE",
-                e[e.ENTER_INNER_ROOM = 1006] = "ENTER_INNER_ROOM",
-                e[e.DEAL_CARD = 1300] = "DEAL_CARD",
-                e[e.BACCARAT_BET = 1008] = "BACCARAT_BET",
-                e[e.SYNC_BET = 1999] = "SYNC_BET",
-                e[e.ROAD_SET_SUCCEED = 1305] = "ROAD_SET_SUCCEED",
-                e[e.BACCARAT_ONLINE_LIST = 1101] = "BACCARAT_ONLINE_LIST",
-                e[e.BET_STAGE_ERROR = 1202] = "BET_STAGE_ERROR",
-                e[e.EDIT_CARDS = 1301] = "EDIT_CARDS",
-                e[e.WASHING_CARD = 1302] = "WASHING_CARD",
-                e[e.INTO_MAINTAIN = 1304] = "INTO_MAINTAIN",
-                e[e.BET_INFO_RES = 1315] = "BET_INFO_RES",
-                e[e.BACCARAT_KICK_USER_2_LIST = 1316] = "BACCARAT_KICK_USER_2_LIST",
-                e[e.SET_SHOW_OPTION_SUCCEED = 1308] = "SET_SHOW_OPTION_SUCCEED",
-                e[e.BACCARAT_UPDATE_DEALER_INFO = 1317] = "BACCARAT_UPDATE_DEALER_INFO",
-                e[e.BACCARAT_ROOM_VIDEO_URL_INFO = 1407] = "BACCARAT_ROOM_VIDEO_URL_INFO",
-                e[e.BACCARAT_MI_START = 1400] = "BACCARAT_MI_START",
-                e[e.BACCARAT_MI_INFO = 1401] = "BACCARAT_MI_INFO",
-                e[e.BACCARAT_MI_END = 1402] = "BACCARAT_MI_END",
-                e[e.BACCARAT_MI_RIGHT_INFO = 1403] = "BACCARAT_MI_RIGHT_INFO",
-                e[e.BACCARAT_MI_OTHER_OPEN = 1404] = "BACCARAT_MI_OTHER_OPEN",
-                e[e.BACCARAT_MI_CAN_ENTER_WITH_SIT = 1405] = "BACCARAT_MI_CAN_ENTER_WITH_SIT",
-                e[e.BACCARAT_MI_ENTER_WITH_SIT_RES = 1406] = "BACCARAT_MI_ENTER_WITH_SIT_RES",
-                e[e.BACCARAT_BET_RES = 1409] = "BACCARAT_BET_RES",
-                e[e.ROOM_LIST = 2999] = "ROOM_LIST",
-                e[e.ACCOUNT_REMOTE_LOGIN = 702] = "ACCOUNT_REMOTE_LOGIN",
-                e[e.BACCARAT_CLIENT_CONFIG = 1430] = "BACCARAT_CLIENT_CONFIG",
-                e[e.BACCARAT_SELF_CHIPS = 1441] = "BACCARAT_SELF_CHIPS",
-                e))({})
-
-            zc.data= {}
-            for(let key in zc){
-                if (typeof zc[key] === 'number') {
-                    const theKey = key;
-                    window.wsNet.onWSReceive(zc[theKey], (e) => {
-                        console.info('onWSReceive ' + theKey + ':', e);
-                        zc.data[theKey]=e;
-                    });
-                }
-            }
-            window.zc = zc;
-        }
-    }
-
-     function handleMessage(card1, card2, theTime, betAmount) {
+    function handleMessage(card1, card2, theTime, betAmount) {
         console.info('handle message:', card1, card2, theTime, betAmount);
 
         if(betAmount==0){
@@ -121,7 +63,6 @@
             }
             console.info('handle pack spend time:', new Date().getTime() - theTime, card1_num, card2_num, area_num,betAmount);
             //return;
-            bindEvent();
         }
 
         function clickBetAreaThenConfirm(count){
