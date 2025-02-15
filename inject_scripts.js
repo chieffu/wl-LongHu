@@ -351,9 +351,10 @@
     function monitorMoney() {
         if (window.recognitionIntervalId) {
             clearInterval(window.recognitionIntervalId);
+        }else{
+            localStorage.removeItem('totalMoney');
         }
         console.info("start monitor money every 16 seconds.")
-        localStorage.removeItem('totalMoney');
         window.recognitionIntervalId = setInterval(recognizeCanvas, 16000); // 每 16 秒执行一次
     }
     monitorMoney();
