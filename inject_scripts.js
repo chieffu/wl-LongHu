@@ -230,7 +230,7 @@
         button1.style.padding = '5px 10px';
         button1.style.cursor = 'pointer';
         button1.addEventListener('click', () => {
-            const betAmount = parseInt(input.value, 10) || 10;
+            const betAmount = parseFloat(input.value) || 10;
             handleMessage(2, 1, Date.now(), betAmount);
         });
 
@@ -244,7 +244,7 @@
         button2.style.padding = '5px 10px';
         button2.style.cursor = 'pointer';
         button2.addEventListener('click', () => {
-            const betAmount = parseInt(input.value, 10) || 10;
+            const betAmount = parseFloat(input.value) || 10;
             handleMessage(1, 2, Date.now(), betAmount);
         });
 
