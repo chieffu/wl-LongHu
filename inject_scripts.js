@@ -53,14 +53,25 @@
         const card1_num = (card1 % 13) + 1;
         const card2_num = (card2 % 13) + 1;
         const area_num = card1_num > card2_num ? 0 : (card1_num < card2_num ? 2 : 1);
+
         if (self.wsNet && wsNet.send) {
-            if (card1_num > card2_num) {
-                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + (Date.now() - Math.floor(Math.random() * 1501)), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
-            } else if (card1_num < card2_num) {
-                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + (Date.now() - Math.floor(Math.random() * 1501)), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
-            } else if (card1_num == card2_num) {
-                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + (Date.now() - Math.floor(Math.random() * 1501)), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
-            }
+//            if( self.location.href.includes("trial=1")){
+//                if (card1_num > card2_num) {
+//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
+//                } else if (card1_num < card2_num) {
+//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
+//                } else if (card1_num == card2_num) {
+//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
+//                }
+//            }else{
+                if (card1_num > card2_num) {
+                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
+                } else if (card1_num < card2_num) {
+                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
+                } else if (card1_num == card2_num) {
+                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
+                }
+//            }
             console.info('handle pack spend time:', new Date().getTime() - theTime, card1_num, card2_num, area_num,betAmount);
             //return;
         }
@@ -257,6 +268,8 @@
 
     // 识别 canvas 中的数字金额
     function recognizeCanvas() {
+        const video = document.querySelector('video');
+        if(video)video.playbackRate=4
         const canvas = document.querySelector('canvas.canvas.overflow-hidden');
         if (!canvas) {
             console.warn('Canvas not found');
@@ -298,8 +311,8 @@
         }else{
             localStorage.removeItem('totalMoney');
         }
-        console.info("start monitor money every 16 seconds.")
-        window.recognitionIntervalId = setInterval(recognizeCanvas, 16000); // 每 16 秒执行一次
+        console.info("start monitor money every 5 seconds.")
+        window.recognitionIntervalId = setInterval(recognizeCanvas, 5000); // 每 16 秒执行一次
     }
     monitorMoney();
     console.info('injecting scripts successfully.');
