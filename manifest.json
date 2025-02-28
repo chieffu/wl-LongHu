@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WL-LongHu ",
+  "name": "WL-Game-Helper",
   "version": "1.0",
-  "description": "WL-LongHu helper.",
+  "description": "WL Game Helper",
   "permissions": ["activeTab", "webNavigation","webRequest", "tabs","debugger","storage", "scripting"],
   "host_permissions": ["<all_urls>"],
   "background": {
@@ -18,7 +18,7 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "48": "icon48.png"
+      "64": "icon64.png"
     }
   },
   "web_accessible_resources": [

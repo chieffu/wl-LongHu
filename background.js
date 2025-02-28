@@ -108,31 +108,41 @@ function handleServerMessage(message) {
         return;
     }
     // 转换数据类型
-    const card1 = parseInt(infos[0], 10);
-    const card2 = parseInt(infos[1], 10);
-    const theTime = parseFloat(infos[2]) * 1000; // 假设 theTime 是秒数，转换为毫秒
-    const startTime = new Date().getTime();
-
-    chrome.storage.local.get(['amount'], ({ amount }) => {
-        if (amount !== undefined) {
-            executeHandleMessageInTabs(card1, card2, theTime, amount);
+    if(infos.length==3){
+        const card1 = parseInt(infos[0], 10);
+        const card2 = parseInt(infos[1], 10);
+        const theTime = parseFloat(infos[2]) * 1000; // 假设 theTime 是秒数，转换为毫秒
+        const startTime = new Date().getTime();
+        chrome.storage.local.get(['amount'], ({ amount }) => {
+            let betAmount = amount !== undefined ? amount : 10;
+            const script = 'handleMessage(' + card1 + ',' + card2 + ',' + theTime + ',' + betAmount + ');';
+            executeScriptInTabs(script);
             const timeSpend = new Date().getTime() - startTime;
-            console.info(`spend ${timeSpend} ms on message redirect ${card1} - ${card2}, ${amount}`);
-        } else {
-            console.warn('betAmount not found in localStorage');
-            // 处理 amount 未找到的情况，例如设置默认值或提示用户
-            const defaultBetAmount = 10; // 设置默认值
-            executeHandleMessageInTabs(card1, card2, theTime, defaultBetAmount);
+            console.info(`spend ${timeSpend} ms on message redirect ${card1} - ${card2}, ${betAmount}`);
+           
+        });
+        return true;
+    }else if(infos.length==5){
+        const table_id = parseInt(infos[0], 10);
+        const card1 = parseInt(infos[1], 10);
+        const card2 = parseInt(infos[2], 10);
+        const tableName = infos[3];
+        const theTime = parseFloat(infos[4]) * 1000;
+        const startTime = new Date().getTime();
+        chrome.storage.local.get(['amount'], ({ amount }) => {
+            let betAmount = amount !== undefined ? amount : 10;
+            const script = 'handleTableMessage(' + table_id + ',' + card1 + ',' + card2 +',"' + tableName+'",' + theTime + ',' + betAmount + ');';
+            executeScriptInTabs(script);
             const timeSpend = new Date().getTime() - startTime;
-            console.info(`spend ${timeSpend} ms on message redirect ${card1} - ${card2}, ${amount}`);
-        }
+            console.info(`spend ${timeSpend} ms on message redirect ${table_id}-${tableName} - ${card1} - ${card2}, ${betAmount}`)
     });
-    return true;
+    }
+    
 }
 
 // 在所有附加的标签页中执行 handleMessage 函数
-async function executeHandleMessageInTabs(card1, card2, theTime, betAmount) {
-    const script = 'handleMessage(' + card1 + ',' + card2 + ',' + theTime + ',' + betAmount + ');';
+async function executeScriptInTabs(script) {
+   
     // 获取所有调试目标
     chrome.debugger.getTargets((targets) => {
         if (chrome.runtime.lastError) {

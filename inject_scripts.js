@@ -33,9 +33,51 @@
         }
         return selectedCoins;
     }
+    function getNavigationTitle() {
+        let div = document.querySelector('#navBar span.text-sm')
+        if (div === null || div === undefined || div.innerText === null || div.innerText === undefined) {
+            return '';
+        }
+        return div.innerText;
+    }
+    function isLongHuPage(){
+        return getNavigationTitle().includes('L01')
+    }
+    function clickBetAreaThenConfirm(areaSelector,confirmSelector,count,theTime){
+        document.querySelectorAll(areaSelector).forEach(div => {
+           for(i=count-1;i>0;i--){
+               clickCenter(div);
+           }
+           const clickPromise = new Promise(resolve => {
+               div.addEventListener('click', function() {
+                   // 触发点击事件
+                   const childDivs = document.querySelectorAll(confirmSelector);
+                   childDivs.forEach(div1 => {
+                       setTimeout(() => {
+                           if (window.getComputedStyle(div1).display !== 'none' && div1.parentElement && window.getComputedStyle(div1.parentElement).display !== 'none') { // 检查子div是否显示
+                               clickCenter(div1); // 延迟触发点击事件
+                               console.info('handle message click confirm spend time:',new Date().getTime()-theTime);
+                           }
+                       }, 0);
+                   });
+                   resolve(); // 解析 Promise
+               }, { once: true });
+           });
+
+           clickCenter(div);
+           console.info('handle message click bet div spend time:', new Date().getTime() - theTime);
+           // 等待 clickPromise 解析后再继续
+           clickPromise.then(() => {
+           });
+       });
+   }
     function handleMessage(card1, card2, theTime, betAmount) {
         console.info('handle message:', card1, card2, theTime, betAmount);
-
+        if (!isLongHuPage()) {
+            console.warn('当前不是"龙虎 L01"页面,忽略消息');
+            removeFloatingDiv();
+            return;
+        }
         if(betAmount==0){
             betAmount = localStorage.getItem('betAmount');
             if(!betAmount||betAmount==0)betAmount=10;
@@ -55,55 +97,15 @@
         const area_num = card1_num > card2_num ? 0 : (card1_num < card2_num ? 2 : 1);
 
         if (self.wsNet && wsNet.send) {
-//            if( self.location.href.includes("trial=1")){
-//                if (card1_num > card2_num) {
-//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
-//                } else if (card1_num < card2_num) {
-//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
-//                } else if (card1_num == card2_num) {
-//                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
-//                }
-//            }else{
-                if (card1_num > card2_num) {
-                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
-                } else if (card1_num < card2_num) {
-                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
-                } else if (card1_num == card2_num) {
-                    wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
-                }
-//            }
+            if (card1_num > card2_num) {
+                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 1, bet: betAmount * 100, betType: 0, count: 1 }] });
+            } else if (card1_num < card2_num) {
+                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 2, bet: betAmount * 100, betType: 0, count: 1 }] });
+            } else if (card1_num == card2_num) {
+                wsNet.send(500, 2000, { roomId: 8801, betEnv: 1, carrier: '8801-' + Date.now(), areaBet: [{ area: 3, bet: betAmount * 100, betType: 0, count: 1 }] });
+            }
             console.info('handle pack spend time:', new Date().getTime() - theTime, card1_num, card2_num, area_num,betAmount);
             //return;
-        }
-
-        function clickBetAreaThenConfirm(count){
-            const clickArea = '.area-' + area_num + ' > div[fast-click]';
-            document.querySelectorAll(clickArea).forEach(div => {
-                for(i=count-1;i>0;i--){
-                    clickCenter(div);
-                }
-                const clickPromise = new Promise(resolve => {
-                    div.addEventListener('click', function() {
-                        // 触发点击事件
-                        const childDivs = document.querySelectorAll('.area-' + area_num + ' .button-click.chips-button-right');
-                        childDivs.forEach(div1 => {
-                            setTimeout(() => {
-                                if (window.getComputedStyle(div1).display !== 'none' && div1.parentElement && window.getComputedStyle(div1.parentElement).display !== 'none') { // 检查子div是否显示
-                                    clickCenter(div1); // 延迟触发点击事件
-                                    console.info('handle message click confirm spend time :', new Date().getTime() - theTime, card1_num, card2_num, area_num);
-                                }
-                            }, 0);
-                        });
-                        resolve(); // 解析 Promise
-                    }, { once: true });
-                });
-
-                clickCenter(div);
-                console.info('handle message click bet div spend time:', new Date().getTime() - theTime, card1_num, card2_num, area_num);
-                // 等待 clickPromise 解析后再继续
-                clickPromise.then(() => {
-                });
-            });
         }
 
         const coins = selectCoins(betAmount);
@@ -112,27 +114,123 @@
         const cnt = coins.filter(item => item === chipValue).length;
         const chipButton = document.querySelector(`div[data-type="${chipValue}"]`);
         if (chipButton && window.getComputedStyle(chipButton).display !== 'none' && chipButton.parentElement && window.getComputedStyle(chipButton.parentElement).display !== 'none') {
+            const betAreaSelector = '.area-' + area_num + ' > div[fast-click]';
+            const confirmSelector = '.area-' + area_num + ' .button-click.chips-button-right';
             chipButton.addEventListener('click', () => {
                 console.info(`handle message Clicked chip with value: ${chipValue}`);
-                clickBetAreaThenConfirm(cnt);
+                clickBetAreaThenConfirm(betAreaSelector,confirmSelector,cnt,theTime);
             }, { once: true });
             clickCenter(chipButton);
         }
     }
 
+    function isMutipleTable(){
+        let firstRoombettingDiv = document.querySelector('#more-list-wrap .room-betting')
+        return firstRoombettingDiv!==undefined
+    }
+
+    function handleTableMessage(tableId,card1,card2,tableName,theTime,betAmount){
+        console.info('handle table message:', tableId,card1, card2, tableName, theTime, betAmount);
+        if(tableId==8801 && isLongHuPage()){
+            console.info('当前是龙虎 L01页面,且是龙虎消息,立即处理...');
+            return handleMessage(card1, card2, theTime, betAmount);
+        }else if(tableId==8801){
+            console.info('当前不是龙虎页面，忽略龙虎消息。')
+            return;
+        }
+        if (!isMutipleTable()){
+            console.info('当前不是多桌投注页面...');
+            let navigationTitle = getNavigationTitle();
+            if(navigationTitle.includes(tableName)){
+                console.info('当前在游戏'+tableName+'页面...')
+                return betBaccInSingleTable(tableId,card1,card2,theTime,betAmount);
+            }
+            return void 0;
+        }
+       
+        let maxBet = localStorage.getItem('totalMoney')
+        if(!maxBet){
+            maxBet = getMaxSelectedChipValue()
+        }
+        const card1_num = (card1 % 13) + 1;
+        const card2_num = (card2 % 13) + 1;
+        let dot1 = card1_num >=10 ? 0:card1_num, dot2=card2_num>=10?0:card2_num;
+        let xDot = (dot1+dot2)%10;
+        // area-0:闲对  area-3:闲  area-5:庄  area-4:和
+        const betArea = card1_num==card2_num? 'area-0' : (xDot>=7?'area-3':(xDot<=5?'area-5':'area-4'));
+        let theBetAmount = maxBet * (card1_num==card2_num||xDot==9?1:xDot==8?0.65:xDot==7?0.15:xDot==6?0.03:xDot==5?0.05:xDot==4?0.14:xDot==3?0.21:xDot==2?0.25:xDot==1?0.28:xDot==0?0.29:0.01)
+        if(theBetAmount<10)theBetAmount=10
+
+        //9 ：（100%闲）   8：（65%闲）  7:（15%闲，4% 和）  6：（3%和） 5：（5% 庄） 4：（14%庄） 3：（21%庄） 2：（25%庄） 1：（28%庄）  0:（29%庄）   
+        const coins = selectCoins(theBetAmount);
+        if(coins.length==0)return;
+        const chipValue = coins[0];
+        const cnt = coins.filter(item => item === chipValue).length;
+        const chipButton = document.querySelector(`div[data-type="${chipValue}"]`);
+        const clickAreaSelector = '#lot-bet-item-box-'+tableId+' .' + betArea + ' > div[fast-click]';
+        const confirmAreaSelector = '#lot-bet-item-box-'+tableId+' .' + betArea + ' .button-click.chips-button-right';
+        const outDiv = document.querySelector('#lot-bet-item-box-' + tableId);
+        let clickedBet = false;
+        if (outDiv) {
+            if(outDiv.getAttribute('class')=='lazy-show' && outDiv.getAttribute('inview')=='true'){
+                clickChipAndBet();
+            }else{
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            observer.unobserve(outDiv); // 停止观察
+                            if(outDiv.getAttribute('class')=='lazy-show' && outDiv.getAttribute('inview')=='true'){
+                                clickChipAndBet();
+                            }else{
+                                const mutationObserver = new MutationObserver((mutationsList) => {
+                                    for (let mutation of mutationsList) {
+                                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                                            clickChipAndBet();
+                                            mutationObserver.disconnect();
+                                        }
+                                    }
+                                });
+                                mutationObserver.observe(outDiv, { attributes: true });
+                            }
+                        }
+                    });
+                }, { threshold: 1 });
+                observer.observe(outDiv);
+                outDiv.scrollIntoView();
+            }
+            setTimeout(()=>{
+                clickChipAndBet()
+            },20)
+        }
+        function clickChipAndBet(){
+            if (chipButton && window.getComputedStyle(chipButton).display !== 'none' && chipButton.parentElement && window.getComputedStyle(chipButton.parentElement).display !== 'none'&& !clickedBet) {
+                chipButton.addEventListener('click', () => {
+                    console.info(`handle message Clicked chip with value: ${chipValue}`);
+                    clickBetAreaThenConfirm(clickAreaSelector, confirmAreaSelector, cnt,theTime);
+                }, { once: true });
+                clickCenter(chipButton);
+                clickedBet = true
+            }
+        }
+    }
+    
+    self.handleTableMessage = handleTableMessage;
+
     // 暴露方法供外部调用
     self.handleMessage = handleMessage;
 
+    function removeFloatingDiv(){
+        const existingDiv = document.getElementById('testBetDiv');
+        if (existingDiv) {
+            existingDiv.remove();
+            console.log("floating div removed!")
+        }
+    }
     // 创建悬浮的 div
     function createFloatingDiv() {
         // 检查是否已经存在悬浮 div
         // 检查是否已经存在悬浮 div
-        const existingDiv = document.getElementById('testBetDiv');
-        if (existingDiv) {
-            console.info('testBetDiv div already exists. Removing existing div.');
-            existingDiv.remove();
-        }
-
+        removeFloatingDiv()
         const floatingDiv = document.createElement('div');
         floatingDiv.id = 'testBetDiv'; // 添加唯一的 id
         floatingDiv.style.position = 'fixed';
@@ -234,6 +332,9 @@
         // 将悬浮 div 添加到 body
         document.body.appendChild(floatingDiv);
         console.info('testBetDiv div added');
+        if(!isLongHuPage()){
+            floatingDiv.style.display='none';
+        }
     }
 
     function getMaxSelectedChipValue() {
@@ -269,7 +370,7 @@
     // 识别 canvas 中的数字金额
     function recognizeCanvas() {
         const video = document.querySelector('video');
-        if(video)video.playbackRate=4
+        if(video)video.playbackRate=16
         const canvas = document.querySelector('canvas.canvas.overflow-hidden');
         if (!canvas) {
             console.warn('Canvas not found');
@@ -311,8 +412,8 @@
         }else{
             localStorage.removeItem('totalMoney');
         }
-        console.info("start monitor money every 5 seconds.")
-        window.recognitionIntervalId = setInterval(recognizeCanvas, 5000); // 每 16 秒执行一次
+        // console.info("start monitor money every 10 seconds.")
+        window.recognitionIntervalId = setInterval(recognizeCanvas, 10000); // 每 16 秒执行一次
     }
     monitorMoney();
     console.info('injecting scripts successfully.');
