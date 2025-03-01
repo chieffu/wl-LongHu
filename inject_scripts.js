@@ -43,34 +43,7 @@
     function isLongHuPage(){
         return getNavigationTitle().includes('L01')
     }
-    function clickBetAreaThenConfirm(areaSelector,confirmSelector,count,theTime){
-        document.querySelectorAll(areaSelector).forEach(div => {
-           for(i=count-1;i>0;i--){
-               clickCenter(div);
-           }
-           const clickPromise = new Promise(resolve => {
-               div.addEventListener('click', function() {
-                   // 触发点击事件
-                   const childDivs = document.querySelectorAll(confirmSelector);
-                   childDivs.forEach(div1 => {
-                       setTimeout(() => {
-                           if (window.getComputedStyle(div1).display !== 'none' && div1.parentElement && window.getComputedStyle(div1.parentElement).display !== 'none') { // 检查子div是否显示
-                               clickCenter(div1); // 延迟触发点击事件
-                               console.info('handle message click confirm spend time:',new Date().getTime()-theTime);
-                           }
-                       }, 0);
-                   });
-                   resolve(); // 解析 Promise
-               }, { once: true });
-           });
-
-           clickCenter(div);
-           console.info('handle message click bet div spend time:', new Date().getTime() - theTime);
-           // 等待 clickPromise 解析后再继续
-           clickPromise.then(() => {
-           });
-       });
-   }
+   
     function handleMessage(card1, card2, theTime, betAmount) {
         console.info('handle message:', card1, card2, theTime, betAmount);
         if (!isLongHuPage()) {
@@ -129,68 +102,109 @@
         return firstRoombettingDiv!==undefined
     }
 
-    function handleTableMessage(tableId,card1,card2,tableName,theTime,betAmount){
-        console.info('handle table message:', tableId,card1, card2, tableName, theTime, betAmount);
-        if(tableId==8801 && isLongHuPage()){
+    function handleTableMessage(tableId, card1, card2, tableName, theTime, betAmount) {
+        console.info('handle table message:', tableId, card1, card2, tableName, theTime, betAmount);
+        if (tableId == 8801 && isLongHuPage()) {
             console.info('当前是龙虎 L01页面,且是龙虎消息,立即处理...');
             return handleMessage(card1, card2, theTime, betAmount);
-        }else if(tableId==8801){
-            console.info('当前不是龙虎页面，忽略龙虎消息。')
+        } else if (tableId == 8801) {
+            console.info('当前不是龙虎页面，忽略龙虎消息。');
             return;
         }
-        if (!isMutipleTable()){
+        if (!isMutipleTable()) {
             console.info('当前不是多桌投注页面...');
             let navigationTitle = getNavigationTitle();
-            if(navigationTitle.includes(tableName)){
-                console.info('当前在游戏'+tableName+'页面...')
-                return betBaccInSingleTable(tableId,card1,card2,theTime,betAmount);
+            if (navigationTitle.includes(tableName)) {
+                console.info('当前在游戏' + tableName + '页面...');
+                return betBaccInSingleTable(tableId, card1, card2, theTime, betAmount);
             }
             return void 0;
         }
-       
-        let maxBet = localStorage.getItem('totalMoney')
-        if(!maxBet){
-            maxBet = getMaxSelectedChipValue()
+    
+        let maxBet = localStorage.getItem('totalMoney');
+        if (!maxBet) {
+            maxBet = getMaxSelectedChipValue();
         }
         const card1_num = (card1 % 13) + 1;
         const card2_num = (card2 % 13) + 1;
-        let dot1 = card1_num >=10 ? 0:card1_num, dot2=card2_num>=10?0:card2_num;
-        let xDot = (dot1+dot2)%10;
+        let dot1 = card1_num >= 10 ? 0 : card1_num, dot2 = card2_num >= 10 ? 0 : card2_num;
+        let xDot = (dot1 + dot2) % 10;
+        let needBet,needBetAmount,theDotKey
+        for(key in window.betRates){
+            if(key.includes(''+xDot)){
+                theDotKey = key
+                needBet = window.betRates[key][1]
+                needBetAmount = window.betRates[key][0]
+                break
+            }
+        }
+        if(card1_num==card2_num){
+            let key = '闲对'
+            needBet = window.betRates[key][1]
+            needBetAmount = window.betRates[key][0]
+        }
+        if(!needBet){
+            console.info("闲"+xDot+"["+card2_num+","+card2_num+"]  "+theDotKey+" 配置了不下注。");
+            return
+        }
         // area-0:闲对  area-3:闲  area-5:庄  area-4:和
-        const betArea = card1_num==card2_num? 'area-0' : (xDot>=7?'area-3':(xDot<=5?'area-5':'area-4'));
-        let theBetAmount = maxBet * (card1_num==card2_num||xDot==9?1:xDot==8?0.65:xDot==7?0.15:xDot==6?0.03:xDot==5?0.05:xDot==4?0.14:xDot==3?0.21:xDot==2?0.25:xDot==1?0.28:xDot==0?0.29:0.01)
-        if(theBetAmount<10)theBetAmount=10
-
-        //9 ：（100%闲）   8：（65%闲）  7:（15%闲，4% 和）  6：（3%和） 5：（5% 庄） 4：（14%庄） 3：（21%庄） 2：（25%庄） 1：（28%庄）  0:（29%庄）   
+        const betAreaMap = {
+            0: 'area-5',
+            1: 'area-5',
+            2: 'area-5',
+            3: 'area-5',
+            4: 'area-5',
+            5: 'area-5',
+            6: 'area-4',
+            7: 'area-3',
+            8: 'area-3',
+            9: 'area-3'
+        };
+        
+        const betArea = card1_num === card2_num ? 'area-0' : betAreaMap[xDot];
+        let theBetAmount;
+        if(betAmount>1){
+            theBetAmount = betAmount;
+        }else if (betAmount==-1||betAmount==0){
+            theBetAmount = needBetAmount;
+        }
+        if(theBetAmount<=1){
+            theBetAmount = maxBet * theBetAmount;
+        }
+        if (theBetAmount < 10) theBetAmount = 10;
+    
         const coins = selectCoins(theBetAmount);
-        if(coins.length==0)return;
+        if (coins.length == 0) return;
         const chipValue = coins[0];
         const cnt = coins.filter(item => item === chipValue).length;
         const chipButton = document.querySelector(`div[data-type="${chipValue}"]`);
-        const clickAreaSelector = '#lot-bet-item-box-'+tableId+' .' + betArea + ' > div[fast-click]';
-        const confirmAreaSelector = '#lot-bet-item-box-'+tableId+' .' + betArea + ' .button-click.chips-button-right';
-        const outDiv = document.querySelector('#lot-bet-item-box-' + tableId);
+        const clickAreaSelector = `#lot-bet-item-box-${tableId} .${betArea} > div[fast-click]`;
+        const confirmAreaSelector = `#lot-bet-item-box-${tableId} .${betArea} .button-click.chips-button-right`;
+        const outDiv = document.querySelector(`#lot-bet-item-box-${tableId}`);
         let clickedBet = false;
+    
         if (outDiv) {
-            if(outDiv.getAttribute('class')=='lazy-show' && outDiv.getAttribute('inview')=='true'){
+            if (outDiv.getAttribute('class') == 'lazy-show' && outDiv.getAttribute('inview') == 'true') {
                 clickChipAndBet();
-            }else{
+            } else {
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             observer.unobserve(outDiv); // 停止观察
-                            if(outDiv.getAttribute('class')=='lazy-show' && outDiv.getAttribute('inview')=='true'){
+                            if (outDiv.getAttribute('class') == 'lazy-show' && outDiv.getAttribute('inview') == 'true') {
                                 clickChipAndBet();
-                            }else{
+                            } else {
                                 const mutationObserver = new MutationObserver((mutationsList) => {
                                     for (let mutation of mutationsList) {
-                                        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                                            clickChipAndBet();
-                                            mutationObserver.disconnect();
+                                        if (mutation.type === 'attributes' && (mutation.attributeName === 'class' || mutation.attributeName === 'inview')) {
+                                            if (outDiv.getAttribute('class') == 'lazy-show' && outDiv.getAttribute('inview') == 'true') {
+                                                clickChipAndBet();
+                                                mutationObserver.disconnect(); // 停止观察
+                                            }
                                         }
                                     }
                                 });
-                                mutationObserver.observe(outDiv, { attributes: true });
+                                mutationObserver.observe(outDiv, { attributes: true, attributeFilter: ['class', 'inview'] });
                             }
                         }
                     });
@@ -198,20 +212,50 @@
                 observer.observe(outDiv);
                 outDiv.scrollIntoView();
             }
-            setTimeout(()=>{
-                clickChipAndBet()
-            },20)
+            setTimeout(() => {
+                clickChipAndBet();
+            }, 20);
         }
-        function clickChipAndBet(){
-            if (chipButton && window.getComputedStyle(chipButton).display !== 'none' && chipButton.parentElement && window.getComputedStyle(chipButton.parentElement).display !== 'none'&& !clickedBet) {
+    
+        function clickChipAndBet() {
+            if (chipButton && window.getComputedStyle(chipButton).display !== 'none' && chipButton.parentElement && window.getComputedStyle(chipButton.parentElement).display !== 'none' && !clickedBet) {
                 chipButton.addEventListener('click', () => {
                     console.info(`handle message Clicked chip with value: ${chipValue}`);
-                    clickBetAreaThenConfirm(clickAreaSelector, confirmAreaSelector, cnt,theTime);
+                    clickBetAreaThenConfirm(clickAreaSelector, confirmAreaSelector, cnt, theTime);
                 }, { once: true });
                 clickCenter(chipButton);
-                clickedBet = true
+                clickedBet = true;
             }
         }
+    }
+    
+    function clickBetAreaThenConfirm(areaSelector, confirmSelector, count, theTime) {
+        document.querySelectorAll(areaSelector).forEach(div => {
+            for (let i = count - 1; i >= 0; i--) {
+                clickCenter(div);
+            }
+            const clickPromise = new Promise(resolve => {
+                div.addEventListener('click', function () {
+                    // 触发点击事件
+                    const childDivs = document.querySelectorAll(confirmSelector);
+                    childDivs.forEach(div1 => {
+                        requestAnimationFrame(() => {
+                            if (window.getComputedStyle(div1).display !== 'none' && div1.parentElement && window.getComputedStyle(div1.parentElement).display !== 'none') { // 检查子div是否显示
+                                clickCenter(div1); // 延迟触发点击事件
+                                console.info('handle message click confirm spend time:', new Date().getTime() - theTime);
+                            }
+                        });
+                    });
+                    resolve(); // 解析 Promise
+                }, { once: true });
+            });
+    
+            clickCenter(div);
+            console.info('handle message click bet div spend time:', new Date().getTime() - theTime);
+            // 等待 clickPromise 解析后再继续
+            clickPromise.then(() => {
+            });
+        });
     }
     
     self.handleTableMessage = handleTableMessage;
@@ -220,94 +264,125 @@
     self.handleMessage = handleMessage;
 
     function removeFloatingDiv(){
-        const existingDiv = document.getElementById('testBetDiv');
+        const existingDiv = document.getElementById('betFloatingDiv');
         if (existingDiv) {
             existingDiv.remove();
             console.log("floating div removed!")
         }
     }
-    // 创建悬浮的 div
+   // 创建悬浮的 div
     function createFloatingDiv() {
         // 检查是否已经存在悬浮 div
-        // 检查是否已经存在悬浮 div
-        removeFloatingDiv()
+        removeFloatingDiv();
         const floatingDiv = document.createElement('div');
-        floatingDiv.id = 'testBetDiv'; // 添加唯一的 id
+        floatingDiv.id = 'betFloatingDiv'; // 添加唯一的 id
         floatingDiv.style.position = 'fixed';
         floatingDiv.style.bottom = '20px';
         floatingDiv.style.left = '20px'; // 初始位置调整为左下角
         floatingDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
         floatingDiv.style.border = '2px solid #ff6347'; // 设置鲜艳的颜色边框
         floatingDiv.style.padding = '10px';
-        floatingDiv.style.borderRadius = '5px';
-        floatingDiv.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
-        floatingDiv.style.zIndex = '1000';
+        floatingDiv.style.borderRadius = '3px';
+        floatingDiv.style.boxShadow = '0 2px 3px rgba(0, 0, 0, 0.2)';
+        floatingDiv.style.zIndex = '10000';
         floatingDiv.style.cursor = 'move'; // 添加鼠标移动光标
-        floatingDiv.style.width = '200px'; // 设置固定宽度
-        floatingDiv.style.height = '100px'; // 设置固定高度
+        floatingDiv.style.width = '180px'; // 调整宽度以适应更多内容
+        floatingDiv.style.height = 'auto'; // 高度自适应
+        floatingDiv.style.fontSize = '12px';
 
         // 创建标题
         const title = document.createElement('div');
-        title.id='bet-comment';
-        title.textContent = '插件下注';
+        title.id = 'bet-comment';
+        title.textContent = '插件配置';
         title.style.textAlign = 'center';
         title.style.marginBottom = '10px';
-        title.style.fontSize = '11px';
-
-        // 创建输入框
-        const input = document.createElement('input');
-        input.type = 'number';
-        let value = window.localStorage.getItem('betAmount');
-        if (value === null || isNaN(value)) {
-            value = 10;
-            window.localStorage.setItem('betAmount', value);
-        }
-        input.value = value;
-        input.style.marginRight = '10px';
-        input.style.width = '80px'; // 设置输入框宽度
-        input.style.border = '1px solid #ccc';
-        // 监听输入框失去焦点事件
-        input.addEventListener('blur', function() {
-            let newValue = input.value;
-            if (!isNaN(newValue)) {
-                window.localStorage.setItem('betAmount', newValue);
-            }
-        });
-
-        // 创建按钮1
-        const button1 = document.createElement('button');
-        button1.textContent = '龙';
-        button1.style.marginRight = '10px';
-        button1.style.backgroundColor = '#007bff'; // 蓝色背景
-        button1.style.color = '#fff'; // 白色文字
-        button1.style.border = 'none';
-        button1.style.borderRadius = '5px';
-        button1.style.padding = '5px 10px';
-        button1.style.cursor = 'pointer';
-        button1.addEventListener('click', () => {
-            const betAmount = parseFloat(input.value) || 10;
-            handleMessage(2, 1, Date.now(), betAmount);
-        });
-
-        // 创建按钮2
-        const button2 = document.createElement('button');
-        button2.textContent = '虎';
-        button2.style.backgroundColor = '#ff0000'; // 红色背景
-        button2.style.color = '#fff'; // 白色文字
-        button2.style.border = 'none';
-        button2.style.borderRadius = '5px';
-        button2.style.padding = '5px 10px';
-        button2.style.cursor = 'pointer';
-        button2.addEventListener('click', () => {
-            const betAmount = parseFloat(input.value) || 10;
-            handleMessage(1, 2, Date.now(), betAmount);
-        });
-
-        // 将元素添加到悬浮 div
+        title.style.width = '100%';
         floatingDiv.appendChild(title);
-        floatingDiv.appendChild(input);
-        floatingDiv.appendChild(button1);
-        floatingDiv.appendChild(button2);
+        // 默认值
+        const defaultValues = {
+            '0庄': [0.29, true],
+            '1庄': [0.28, true],
+            '2庄': [0.25, true],
+            '3庄': [0.21, true],
+            '4庄': [0.14, true],
+            '5庄': [0.05, true],
+            '6和': [0.03, true],
+            '7闲': [0.15, true],
+            '8闲': [0.65, true],
+            '9闲': [1, true],
+            '闲对': [1, true],
+            '龙虎': [1, true]
+        };
+
+        // 从 localStorage 加载数据，如果没有则使用默认值
+        const storedValues = window.betRates || JSON.parse(localStorage.getItem('betRates')) || defaultValues;
+        window.betRates = storedValues;
+
+        // 创建标签、输入框和复选框
+        const labelsAndInputs = Object.keys(window.betRates);
+        labelsAndInputs.forEach(labelText => {
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.alignItems = 'center';
+            container.style.marginBottom = '3px';
+
+            const label = document.createElement('label');
+            label.textContent = labelText;
+            label.style.marginRight = '3px';
+            label.style.flex = '1';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'checkbox_' + labelText;
+            checkbox.style.marginRight = '3px';
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.name = 'input_' + labelText;
+            input.style.width = '65%'; // 设置输入框宽度
+            input.style.border = '1px solid #ccc';
+            input.style.marginRight = '3px';
+
+            // 设置默认值
+            input.value = storedValues[labelText][0];
+            checkbox.checked = storedValues[labelText][1];
+
+
+            // 将标签、复选框和输入框添加到容器
+            container.appendChild(label);
+            container.appendChild(checkbox);
+            container.appendChild(input);
+
+            // 将容器添加到悬浮 div
+            floatingDiv.appendChild(container);
+        });
+
+        // 创建保存按钮
+        const saveButton = document.createElement('button');
+        saveButton.textContent = '保存';
+        saveButton.style.backgroundColor = '#007bff'; // 蓝色背景
+        saveButton.style.color = '#fff'; // 白色文字
+        saveButton.style.border = 'none';
+        saveButton.style.borderRadius = '3px';
+        saveButton.style.padding = '3px 10px';
+        saveButton.style.cursor = 'pointer';
+        saveButton.style.width = '60px'; // 宽度占满整个 div
+        saveButton.style.marginTop = '10px'; // 上边距
+
+        saveButton.addEventListener('click', () => {
+            const newValues = {};
+            labelsAndInputs.forEach(labelText => {
+                const checkbox = floatingDiv.querySelector(`input[name="checkbox_${labelText}"]`);
+                const input = floatingDiv.querySelector(`input[name="input_${labelText}"]`);
+                newValues[labelText] = [parseFloat(input.value) || defaultValues[labelText][0], checkbox.checked];
+            });
+            localStorage.setItem('betRates', JSON.stringify(newValues));
+            window.betRates = newValues;
+            console.info('数据已保存到 localStorage 并更新到 window.betRates');
+        });
+
+        // 将保存按钮添加到悬浮 div
+        floatingDiv.appendChild(saveButton);
 
         // 添加拖动功能
         let offsetX, offsetY;
@@ -331,10 +406,8 @@
 
         // 将悬浮 div 添加到 body
         document.body.appendChild(floatingDiv);
-        console.info('testBetDiv div added');
-        if(!isLongHuPage()){
-            floatingDiv.style.display='none';
-        }
+        console.info('betFloatingDiv div added');
+
     }
 
     function getMaxSelectedChipValue() {
